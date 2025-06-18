@@ -39,6 +39,16 @@ public class BluetoothController {
     private static final UUID DEVICE_UUID = UUID.fromString("800713BC-3AF7-4CA1-9029-CA765444188F");
     private static final String TAG = "BluetoothLeService";
 
+    private static String[] mNeededPermissions = new String[]{
+            Manifest.permission.BLUETOOTH,
+            Manifest.permission.BLUETOOTH_ADMIN,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+            Manifest.permission.BLUETOOTH_CONNECT,
+
+    };
+
     @SuppressLint("MissingPermission")
     public static void Init(){
         System.out.println("INITIALIZE BLUETOOTH");
@@ -54,16 +64,6 @@ public class BluetoothController {
         mScanner = new BluetoothScanner(UnityPlayer.currentActivity, mBluetoothDevices);
     }
 
-
-    private static String[] mNeededPermissions = new String[]{
-            Manifest.permission.BLUETOOTH,
-            Manifest.permission.BLUETOOTH_ADMIN,
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-            Manifest.permission.BLUETOOTH_CONNECT,
-
-    };
     private static void CheckPermissions(){
         ArrayList<String> lToRequestPermissions = new ArrayList<String>();
         for(int i = 0; i < mNeededPermissions.length; ++i){
@@ -81,12 +81,6 @@ public class BluetoothController {
         }
     }
 
-    public static void SendData(byte[] aData){
-        if (IsConnected()){
-            mBluetoothCommunication.WriteData(aData);
-        }
-    }
-
     // Scan for other bluetooth devices
     public static void Scan(){
         System.out.println("START SCANNING");
@@ -94,23 +88,13 @@ public class BluetoothController {
         SendOnStartScan();
     }
 
-    public static boolean IsScanning(){
-        return mScanner.IsScanning();
-    }
-
     public static void StopScan() {
         mScanner.StopScan();
         SendOnStopScan();
     }
 
-    // Connect to the selected device
-    @SuppressLint("MissingPermission")
-    public static void Connect(String aDeviceAddress){
-        if (mBluetoothCommunication == null) {
-            StopScan();
-            mBluetoothCommunication = new BluetoothCommunication(UnityPlayer.currentActivity.getApplicationContext(), mBluetoothDevices.GetDevice(aDeviceAddress), mBluetoothCommunicationListener);
-            mBluetoothCommunication.StartCommunication();
-        }
+    public static boolean IsScanning(){
+        return mScanner.IsScanning();
     }
 
     @SuppressLint("MissingPermission")
@@ -124,6 +108,16 @@ public class BluetoothController {
 
     private static void SendOnStopScan() {
        UnityPlayer.UnitySendMessage("BLEManager", "OnStopScan", null);
+    }
+
+    // Connect to the selected device
+    @SuppressLint("MissingPermission")
+    public static void Connect(String aDeviceAddress){
+        if (mBluetoothCommunication == null) {
+            StopScan();
+            mBluetoothCommunication = new BluetoothCommunication(UnityPlayer.currentActivity.getApplicationContext(), mBluetoothDevices.GetDevice(aDeviceAddress), mBluetoothCommunicationListener);
+            mBluetoothCommunication.StartCommunication();
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -154,10 +148,10 @@ public class BluetoothController {
     //Return true if there is some device connected
     public static boolean IsConnected() { return mBluetoothCommunication != null && mBluetoothCommunication.IsConnected(); }
 
-    static byte[] mToSendData = null;
-
-    public static void UpdateDataToSend(byte Engine1, byte Engine2, byte Engine3, byte Engine4){
-        mToSendData = new byte[] {Engine1, Engine2, Engine3,  Engine4};
+    public static void SendData(byte[] aData){
+        if (IsConnected()){
+            mBluetoothCommunication.WriteData(aData);
+        }
     }
 
     private static BluetoothCommunicationListener mBluetoothCommunicationListener = new BluetoothCommunicationListener() {
